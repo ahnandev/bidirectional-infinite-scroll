@@ -15,7 +15,7 @@ export interface ScrollAnchorOptions {
 export interface BidirScrollOptions {
   /** The scrollable container element (items' parent) */
   container: HTMLElement
-  /** Selector or element to use as the entry anchor */
+  /** Selector or element to use as the initial anchor */
   entryAnchor?: string | HTMLElement
   /** Optional overscroll-behavior applied to the container */
   overscrollBehavior?: CSSStyleDeclaration['overscrollBehavior']

@@ -47,10 +47,12 @@ export default function App() {
             >
               Vanilla JS
             </button>
-          </div>
-          <div style={styles.copy}>
-            Starts from entry <strong>#{selectedId}</strong> so the list behavior is visible right
-            away.
+            <a
+              style={styles.modeButton}
+              href="/bidirectional-infinite-scroll/vanilla.html"
+            >
+              Pure Vanilla JS
+            </a>
           </div>
         </div>
       )}
@@ -62,14 +64,12 @@ export default function App() {
         <FeedView
           entryId={selectedId}
           onBack={openGrid}
-          onToggleMode={() => setMode('vanilla')}
         />
       )}
       {!showGrid && mode === 'vanilla' && (
         <VanillaFeedView
           entryId={selectedId}
           onBack={openGrid}
-          onToggleMode={() => setMode('react')}
         />
       )}
     </div>

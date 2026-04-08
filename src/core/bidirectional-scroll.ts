@@ -45,7 +45,9 @@ export function bidirectionalScroll(options: BidirScrollOptions): BidirScrollIns
 
   if (entryAnchor) {
     const el =
-      typeof entryAnchor === 'string' ? container.querySelector<HTMLElement>(entryAnchor) : entryAnchor
+      typeof entryAnchor === 'string'
+        ? container.querySelector<HTMLElement>(entryAnchor)
+        : entryAnchor
     if (el) {
       anchorElement(el)
     }

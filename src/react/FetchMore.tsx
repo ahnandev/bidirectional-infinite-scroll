@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import * as React from 'react'
 
 export interface FetchMoreProps {
   /** Whether there are more items to load */
@@ -21,18 +21,18 @@ export function FetchMore({
   onIntersect,
   observerInit,
 }: FetchMoreProps) {
-  const triggerRef = useRef<HTMLDivElement>(null)
-  const handlerRef = useRef(onIntersect)
+  const triggerRef = React.useRef<HTMLDivElement>(null)
+  const handlerRef = React.useRef(onIntersect)
   handlerRef.current = onIntersect
 
-  const hasMoreRef = useRef(hasMore)
+  const hasMoreRef = React.useRef(hasMore)
   hasMoreRef.current = hasMore
-  const loadingRef = useRef(loading)
+  const loadingRef = React.useRef(loading)
   loadingRef.current = loading
   const threshold = observerInit?.threshold
   const thresholdKey = Array.isArray(threshold) ? threshold.join(',') : String(threshold ?? '')
 
-  useEffect(() => {
+  React.useEffect(() => {
     const el = triggerRef.current
     if (!el) return
 

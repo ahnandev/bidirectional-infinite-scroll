@@ -155,6 +155,156 @@ describe('useBidirectionalScroll', () => {
     expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(2)
   })
 
+  it('itemRef: 첫 번째 아이템이면 firstItemRef를 연결', () => {
+    function Test() {
+      const [items, setItems] = useState(['a', 'b', 'c'])
+      const { itemRef } = useBidirectionalScroll<string>({ safariCorrection: false })
+
+      return (
+        <>
+          {items.map((id, index) => (
+            <div key={id} ref={itemRef({ itemId: id, index })} data-testid={id}>
+              {id}
+            </div>
+          ))}
+          <button data-testid="prepend" onClick={() => setItems(prev => ['new', ...prev])}>
+            prepend
+          </button>
+        </>
+      )
+    }
+
+    const { getByTestId } = render(<Test />)
+    expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled()
+
+    act(() => getByTestId('prepend').click())
+
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1)
+  })
+
+  it('itemRef: anchorId와 일치하면 anchorRef를 연결', () => {
+    function Test() {
+      const { itemRef } = useBidirectionalScroll<string>({
+        anchorId: 'b',
+        safariCorrection: false,
+      })
+
+      return (
+        <>
+          {['a', 'b', 'c'].map((id, index) => (
+            <div key={id} ref={itemRef({ itemId: id, index })} data-testid={id}>
+              {id}
+            </div>
+          ))}
+        </>
+      )
+    }
+
+    render(<Test />)
+
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1)
+  })
+
+  it('itemRef: number itemId와 anchorId도 동일하게 동작', () => {
+    function Test() {
+      const { itemRef } = useBidirectionalScroll<number>({
+        anchorId: 2,
+        safariCorrection: false,
+      })
+
+      return (
+        <>
+          {[1, 2, 3].map((id, index) => (
+            <div key={id} ref={itemRef({ itemId: id, index })} data-testid={String(id)}>
+              {id}
+            </div>
+          ))}
+        </>
+      )
+    }
+
+    render(<Test />)
+
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1)
+  })
+
+  it('itemRef: 첫 번째 아이템이면서 anchorId와 일치하면 ref를 병합', () => {
+    function Test() {
+      const [items, setItems] = useState(['entry', 'b', 'c'])
+      const { itemRef } = useBidirectionalScroll<string>({
+        anchorId: 'entry',
+        safariCorrection: false,
+      })
+
+      return (
+        <>
+          {items.map((id, index) => (
+            <div key={id} ref={itemRef({ itemId: id, index })} data-testid={id}>
+              {id}
+            </div>
+          ))}
+          <button data-testid="prepend" onClick={() => setItems(prev => ['new', ...prev])}>
+            prepend
+          </button>
+        </>
+      )
+    }
+
+    const { getByTestId } = render(<Test />)
+
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1)
+
+    act(() => getByTestId('prepend').click())
+
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(2)
+  })
+
+  it('itemRef: prepend 없는 일반 리렌더에서는 merged ref가 불필요하게 재실행되지 않음', () => {
+    function Test() {
+      const [count, setCount] = useState(0)
+      const { itemRef } = useBidirectionalScroll<string>({
+        anchorId: 'entry',
+        safariCorrection: false,
+      })
+
+      return (
+        <>
+          {['entry', 'b', 'c'].map((id, index) => (
+            <div key={id} ref={itemRef({ itemId: id, index })} data-testid={id}>
+              {id}
+            </div>
+          ))}
+          <button data-testid="rerender" onClick={() => setCount(c => c + 1)}>
+            {count}
+          </button>
+        </>
+      )
+    }
+
+    const { getByTestId } = render(<Test />)
+
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1)
+
+    act(() => getByTestId('rerender').click())
+
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1)
+  })
+
+  it('itemRef: 첫 번째도 anchor도 아니면 undefined를 반환', () => {
+    function Test() {
+      const { itemRef } = useBidirectionalScroll<string>({
+        anchorId: 'z',
+        safariCorrection: false,
+      })
+
+      expect(itemRef({ itemId: 'b', index: 1 })).toBeUndefined()
+
+      return null
+    }
+
+    render(<Test />)
+  })
+
   it('unmount 시 pending rAF cleanup', () => {
     function Test() {
       const { anchorRef } = useBidirectionalScroll({ safariCorrection: true })

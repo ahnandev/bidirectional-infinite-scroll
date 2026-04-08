@@ -2,7 +2,7 @@
 
 Lightweight bidirectional infinite scroll built on `scrollIntoView`.
 
-It uses standard web APIs such as `IntersectionObserver` and `scrollIntoView` instead of scroll listeners and manual `scrollTop` correction. The library handles prepend anchoring by default and includes Safari/iOS correction for `scrollIntoView` layout shifts. For React, use `useBidirectionalScroll`. For vanilla DOM usage, use `bidirectionalScroll`. `FetchMore` is an optional helper component.
+It uses standard web APIs such as `IntersectionObserver` and `scrollIntoView` instead of scroll listeners and manual `scrollTop` correction. For React, use `useBidirectionalScroll`. For vanilla DOM usage, use `bidirectionalScroll`. `FetchMore` is an optional helper component.
 
 [한국어 문서](./README.ko.md)
 
@@ -21,22 +21,26 @@ npm run test:react-matrix
 npm run demo:react -- 16
 ```
 
-## React
+## How To Use
+
+### React
 
 ```tsx
 import { FetchMore, useBidirectionalScroll } from '@ahnandev/bidirectional-infinite-scroll/react'
 
-function Feed({ items, entryId, hasPreviousPage, hasNextPage, loadPrevious, loadNext }) {
-  const { anchorRef, firstItemRef } = useBidirectionalScroll()
+function Feed({ items, anchorId, hasPreviousPage, hasNextPage, loadPrevious, loadNext }) {
+  const { itemRef } = useBidirectionalScroll({
+    anchorId,
+  })
 
   return (
     <div>
       <FetchMore hasMore={hasPreviousPage} onIntersect={loadPrevious} />
 
-      {items.map((item, i) => (
+      {items.map((item, index) => (
         <div
           key={item.id}
-          ref={i === 0 ? firstItemRef : item.id === entryId ? anchorRef : undefined}
+          ref={itemRef({ itemId: item.id, index })}
         >
           {item.title}
         </div>
@@ -48,12 +52,16 @@ function Feed({ items, entryId, hasPreviousPage, hasNextPage, loadPrevious, load
 }
 ```
 
-- `anchorRef`: attach this to the entry item.
-- `firstItemRef`: attach this to the current first item.
-- If the entry item is also the first item, attach both refs to the same element.
-- `FetchMore` is optional. You can provide your own `IntersectionObserver` trigger if you prefer.
+`useBidirectionalScroll`: React hook for bidirectional infinite scroll.
 
-## Vanilla JS
+- `itemRef({ itemId, index })`: pass each item's id and index to the rendered item.
+- optional) `anchorId`: use this when you want the list to start from a specific item.
+- optional) `scrollOptions`: custom `scrollIntoView` options. Defaults to `{ behavior: 'instant', block: 'start' }`.
+- optional) `safariCorrection`: enables double-rAF correction to reduce Safari layout shift. Defaults to `true`.
+- optional) `FetchMore`: helper component. You can provide your own `IntersectionObserver` trigger if you prefer.
+- optional) `anchorRef` and `firstItemRef`: low-level refs for manual control.
+
+### Vanilla JS
 
 ```js
 import { bidirectionalScroll } from '@ahnandev/bidirectional-infinite-scroll'
@@ -75,9 +83,15 @@ const scroll = bidirectionalScroll({
 scroll.destroy()
 ```
 
-- `entryAnchor`: specifies the element to scroll to on initial entry.
-- `onLoadPrevious`: prepend items above the current list. Re-anchoring to the previous first content item is automatic.
-- `onLoadNext`: append items below the current list.
+`bidirectionalScroll`: core vanilla JS function.
+
+- `container`: scroll container element.
+- `onLoadPrevious` / `onLoadNext`: load-more callbacks.
+- optional) `entryAnchor`: use this when you want the list to start from a specific item.
+- optional) `observerInit`: `IntersectionObserver` options for the load triggers.
+- optional) `scrollOptions`: custom `scrollIntoView` options.
+- optional) `overscrollBehavior`: applies `overscroll-behavior` to the container.
+- optional) `safariCorrection`: enables double-rAF correction to reduce Safari layout shift. Defaults to `true`.
 
 ## License
 

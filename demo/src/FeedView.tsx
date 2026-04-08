@@ -7,10 +7,9 @@ const PAGE_SIZE = 5
 interface Props {
   entryId: number
   onBack: () => void
-  onToggleMode: () => void
 }
 
-export function FeedView({ entryId, onBack, onToggleMode }: Props) {
+export function FeedView({ entryId, onBack }: Props) {
   const [items, setItems] = useState<Item[]>([])
   const [pageInfo, setPageInfo] = useState<PageInfo>({
     startCursor: null, endCursor: null,
@@ -18,7 +17,9 @@ export function FeedView({ entryId, onBack, onToggleMode }: Props) {
   })
   const [loading, setLoading] = useState(false)
 
-  const { anchorRef, firstItemRef } = useBidirectionalScroll()
+  const { itemRef } = useBidirectionalScroll<number>({
+    anchorId: entryId,
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -80,9 +81,6 @@ export function FeedView({ entryId, onBack, onToggleMode }: Props) {
         <button style={styles.backBtn} onClick={onBack}>
           ← grid
         </button>
-        <button style={styles.modeButton} onClick={onToggleMode}>
-          Vanilla JS
-        </button>
       </div>
 
       {items.length === 0 ? (
@@ -102,20 +100,11 @@ export function FeedView({ entryId, onBack, onToggleMode }: Props) {
 
           {items.map((item, i) => {
             const isEntry = item.numericId === entryId
-            const isFirst = i === 0
 
             return (
               <div
                 key={item.id}
-                ref={
-                  isEntry && isFirst
-                    ? el => { anchorRef(el); firstItemRef(el) }
-                    : isEntry
-                      ? anchorRef
-                      : isFirst
-                        ? firstItemRef
-                        : undefined
-                }
+                ref={itemRef({ itemId: item.numericId, index: i })}
                 style={{
                   ...styles.card,
                   ...(isEntry ? styles.entryCard : {}),
@@ -162,7 +151,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: '1px solid rgba(255,255,255,0.08)',
     backdropFilter: 'blur(12px)',
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 12,
   },
@@ -175,17 +164,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#fafaf9',
     fontFamily: 'inherit',
     fontWeight: 600,
-  },
-  modeButton: {
-    border: '1px solid rgba(255,255,255,0.18)',
-    background: 'rgba(255,255,255,0.08)',
-    color: '#fafaf9',
-    borderRadius: 999,
-    padding: '8px 12px',
-    fontSize: 12,
-    fontWeight: 600,
-    cursor: 'pointer',
-    fontFamily: 'inherit',
   },
   card: {
     background: '#fff',

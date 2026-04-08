@@ -7,7 +7,6 @@ const PAGE_SIZE = 5
 interface Props {
   entryId: number
   onBack: () => void
-  onToggleMode: () => void
 }
 
 function renderCard(item: Item, entryId: number) {
@@ -58,7 +57,7 @@ function renderLoader(text: string) {
   return el
 }
 
-export function VanillaFeedView({ entryId, onBack, onToggleMode }: Props) {
+export function VanillaFeedView({ entryId, onBack }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [error, setError] = useState<string | null>(null)
@@ -178,9 +177,6 @@ export function VanillaFeedView({ entryId, onBack, onToggleMode }: Props) {
         <button style={styles.backBtn} onClick={onBack}>
           ← grid
         </button>
-        <button style={styles.modeButton} onClick={onToggleMode}>
-          React
-        </button>
       </div>
 
       {status === 'loading' && <div style={styles.loader}>loading...</div>}
@@ -204,7 +200,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: '1px solid rgba(255,255,255,0.08)',
     backdropFilter: 'blur(12px)',
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 12,
   },
@@ -217,17 +213,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#fafaf9',
     fontFamily: 'inherit',
     fontWeight: 600,
-  },
-  modeButton: {
-    border: '1px solid rgba(255,255,255,0.18)',
-    background: 'rgba(255,255,255,0.08)',
-    color: '#fafaf9',
-    borderRadius: 999,
-    padding: '8px 12px',
-    fontSize: 12,
-    fontWeight: 600,
-    cursor: 'pointer',
-    fontFamily: 'inherit',
   },
   loader: {
     textAlign: 'center',

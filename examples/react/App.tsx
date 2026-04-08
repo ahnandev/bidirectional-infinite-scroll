@@ -112,7 +112,9 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const initialLoaded = useRef(false)
 
-  const { anchorRef, firstItemRef } = useBidirectionalScroll()
+  const { itemRef } = useBidirectionalScroll<number>({
+    anchorId: ENTRY_ID,
+  })
 
   // 초기 로드
   useEffect(() => {
@@ -192,20 +194,11 @@ export default function App() {
 
       {items.map((item, i) => {
         const isEntry = item.numericId === ENTRY_ID
-        const isFirst = i === 0
 
         return (
           <div
             key={item.id}
-            ref={
-              isEntry && isFirst
-                ? el => { anchorRef(el); firstItemRef(el) }
-                : isEntry
-                  ? anchorRef
-                  : isFirst
-                    ? firstItemRef
-                    : undefined
-            }
+            ref={itemRef({ itemId: item.numericId, index: i })}
             style={{
               ...styles.card,
               ...(isEntry ? styles.entryCard : {}),
