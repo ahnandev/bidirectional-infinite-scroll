@@ -1,0 +1,5 @@
+node_modules
+dist
+*.tsbuildinfo
+AGENTS.md
+local.md

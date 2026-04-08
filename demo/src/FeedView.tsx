@@ -1,0 +1,221 @@
+import { useCallback, useEffect, useState } from 'react'
+import { FetchMore, useBidirectionalScroll } from '@ahnandev/bidirectional-infinite-scroll/react'
+import { fetchItems, type Item, type PageInfo } from './api'
+
+const PAGE_SIZE = 5
+
+interface Props {
+  entryId: number
+  onBack: () => void
+  onToggleMode: () => void
+}
+
+export function FeedView({ entryId, onBack, onToggleMode }: Props) {
+  const [items, setItems] = useState<Item[]>([])
+  const [pageInfo, setPageInfo] = useState<PageInfo>({
+    startCursor: null, endCursor: null,
+    hasPreviousPage: false, hasNextPage: false,
+  })
+  const [loading, setLoading] = useState(false)
+
+  const { anchorRef, firstItemRef } = useBidirectionalScroll()
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+
+    fetchItems({ entryId, first: 7, last: 3 })
+      .then(data => {
+        if (cancelled) return
+        setItems(data.items)
+        setPageInfo(data.pageInfo)
+      })
+      .finally(() => {
+        if (cancelled) return
+        setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [entryId])
+
+  const loadPrevious = useCallback(async () => {
+    if (loading || !pageInfo.startCursor) return
+    setLoading(true)
+
+    try {
+      const data = await fetchItems({ before: pageInfo.startCursor, last: PAGE_SIZE })
+      setItems(prev => [...data.items, ...prev])
+      setPageInfo(prev => ({
+        ...prev,
+        startCursor: data.pageInfo.startCursor,
+        hasPreviousPage: data.pageInfo.hasPreviousPage,
+      }))
+    } finally {
+      setLoading(false)
+    }
+  }, [loading, pageInfo.startCursor])
+
+  const loadNext = useCallback(async () => {
+    if (loading || !pageInfo.endCursor) return
+    setLoading(true)
+
+    try {
+      const data = await fetchItems({ after: pageInfo.endCursor, first: PAGE_SIZE })
+      setItems(prev => [...prev, ...data.items])
+      setPageInfo(prev => ({
+        ...prev,
+        endCursor: data.pageInfo.endCursor,
+        hasNextPage: data.pageInfo.hasNextPage,
+      }))
+    } finally {
+      setLoading(false)
+    }
+  }, [loading, pageInfo.endCursor])
+
+  return (
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <button style={styles.backBtn} onClick={onBack}>
+          ← grid
+        </button>
+        <button style={styles.modeButton} onClick={onToggleMode}>
+          Vanilla JS
+        </button>
+      </div>
+
+      {items.length === 0 ? (
+        <div style={styles.loader}>loading...</div>
+      ) : (
+        <div style={styles.feed}>
+          {loading && pageInfo.hasPreviousPage && (
+            <div style={styles.loader}>loading...</div>
+          )}
+
+          <FetchMore
+            hasMore={pageInfo.hasPreviousPage}
+            loading={loading}
+            onIntersect={loadPrevious}
+            observerInit={{ rootMargin: '200px' }}
+          />
+
+          {items.map((item, i) => {
+            const isEntry = item.numericId === entryId
+            const isFirst = i === 0
+
+            return (
+              <div
+                key={item.id}
+                ref={
+                  isEntry && isFirst
+                    ? el => { anchorRef(el); firstItemRef(el) }
+                    : isEntry
+                      ? anchorRef
+                      : isFirst
+                        ? firstItemRef
+                        : undefined
+                }
+                style={{
+                  ...styles.card,
+                  ...(isEntry ? styles.entryCard : {}),
+                }}
+              >
+                <img
+                  src={item.imageUrl}
+                  alt={String(item.numericId)}
+                  style={styles.cardImage}
+                  loading="lazy"
+                />
+                <div style={styles.cardLabel}>{item.numericId}</div>
+              </div>
+            )
+          })}
+
+          <FetchMore
+            hasMore={pageInfo.hasNextPage}
+            loading={loading}
+            onIntersect={loadNext}
+            observerInit={{ rootMargin: '200px' }}
+          />
+
+          {loading && pageInfo.hasNextPage && (
+            <div style={styles.loader}>loading...</div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+const styles: Record<string, React.CSSProperties> = {
+  container: {
+    background: '#f5f5f5',
+    minHeight: '100vh',
+  },
+  header: {
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+    padding: '12px 16px',
+    background: 'rgba(28,25,23,0.94)',
+    borderBottom: '1px solid rgba(255,255,255,0.08)',
+    backdropFilter: 'blur(12px)',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  backBtn: {
+    border: 'none',
+    background: 'none',
+    fontSize: 15,
+    cursor: 'pointer',
+    padding: '4px 0',
+    color: '#fafaf9',
+    fontFamily: 'inherit',
+    fontWeight: 600,
+  },
+  modeButton: {
+    border: '1px solid rgba(255,255,255,0.18)',
+    background: 'rgba(255,255,255,0.08)',
+    color: '#fafaf9',
+    borderRadius: 999,
+    padding: '8px 12px',
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+  },
+  card: {
+    background: '#fff',
+    margin: '8px 0',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  entryCard: {
+    boxShadow: 'inset 4px 0 0 #03c75a',
+  },
+  cardImage: {
+    width: '100%',
+    aspectRatio: '4 / 3',
+    objectFit: 'cover',
+    display: 'block',
+  },
+  cardLabel: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    background: 'rgba(0,0,0,0.5)',
+    color: '#fff',
+    padding: '4px 10px',
+    borderRadius: 4,
+    fontSize: 13,
+  },
+  loader: {
+    textAlign: 'center',
+    padding: 20,
+    color: '#999',
+    fontSize: 14,
+  },
+}

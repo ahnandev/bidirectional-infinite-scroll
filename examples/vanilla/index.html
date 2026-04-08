@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ahnandev/bidirectional-infinite-scroll vanilla example</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, sans-serif; background: #f5f5f5; }
+    #feed { max-width: 480px; margin: 0 auto; }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 8px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .card.entry { border-left: 4px solid #03c75a; }
+    .card h3 { font-size: 14px; color: #333; margin-bottom: 8px; }
+    .card p { font-size: 13px; color: #666; line-height: 1.5; }
+    .card .meta { font-size: 11px; color: #aaa; margin-top: 8px; }
+    .loading {
+      text-align: center;
+      padding: 16px;
+      color: #999;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div id="feed"></div>
+
+  <script type="module">
+    import { bidirectionalScroll } from '../../dist/index.js'
+
+    const API_BASE = 'https://dummyjson.com/products?limit=0&select=id,title,thumbnail'
+    const ENTRY_ID = 30
+    const PAGE_SIZE = 5
+
+    const feed = document.getElementById('feed')
+    let allItemsPromise = null
+
+    // --- 상태 ---
+    let startCursor = null
+    let endCursor = null
+    let hasPrevious = false
+    let hasNext = false
+    let loading = false
+
+    // --- DOM 렌더링 ---
+    function renderCard(item) {
+      const card = document.createElement('div')
+      const isEntry = item.numericId === ENTRY_ID
+      card.className = `card${isEntry ? ' entry' : ''}`
+      card.id = item.id
+      card.dataset.numericId = item.numericId
+      card.innerHTML = `
+        <img src="${item.imageUrl}" alt="${item.numericId}" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block;" />
+        <div class="meta">#${item.numericId}${isEntry ? ' · entry' : ''}</div>
+      `
+      return card
+    }
+
+    function showLoading(position) {
+      const el = document.createElement('div')
+      el.className = 'loading'
+      el.dataset.loader = position
+      el.textContent = position === 'top' ? '이전 리뷰 불러오는 중...' : '다음 리뷰 불러오는 중...'
+      if (position === 'top') {
+        const trigger = feed.querySelector('[data-bidir-scroll-trigger="before"]')
+        feed.insertBefore(el, trigger?.nextSibling ?? feed.firstChild)
+      } else {
+        const trigger = feed.querySelector('[data-bidir-scroll-trigger="after"]')
+        feed.insertBefore(el, trigger)
+      }
+      return el
+    }
+
+    // --- Fetch API ---
+    async function fetchAllItems() {
+      if (!allItemsPromise) {
+        allItemsPromise = fetch(API_BASE)
+          .then(async res => {
+            if (!res.ok) throw new Error(`API error: ${res.status}`)
+            const data = await res.json()
+            return data.products.map(product => ({
+              id: `item-${product.id}`,
+              numericId: product.id,
+              imageUrl: product.thumbnail,
+            }))
+          })
+      }
+
+      return allItemsPromise
+    }
+
+    function resolveItems(allItems, params) {
+      const entryId = params.entryId ? Number(params.entryId) : null
+      const after = params.after ? Number(params.after) : null
+      const before = params.before ? Number(params.before) : null
+      const first = params.first ? Number(params.first) : null
+      const last = params.last ? Number(params.last) : null
+
+      let items = []
+      let startIndex = 0
+      let endIndex = allItems.length
+
+      if (entryId === null && after === null && before === null) {
+        items = allItems
+      } else if (entryId !== null) {
+        const entryIndex = allItems.findIndex(item => item.numericId === entryId)
+        if (entryIndex === -1) throw new Error(`entryId ${entryId} not found`)
+        startIndex = Math.max(0, entryIndex - (last ?? 3))
+        endIndex = Math.min(allItems.length, entryIndex + (first ?? 7) + 1)
+        items = allItems.slice(startIndex, endIndex)
+      } else if (after !== null && first) {
+        const afterIndex = allItems.findIndex(item => item.numericId === after)
+        if (afterIndex === -1) throw new Error(`cursor ${after} not found`)
+        startIndex = afterIndex + 1
+        endIndex = Math.min(allItems.length, startIndex + first)
+        items = allItems.slice(startIndex, endIndex)
+      } else if (before !== null && last) {
+        const beforeIndex = allItems.findIndex(item => item.numericId === before)
+        if (beforeIndex === -1) throw new Error(`cursor ${before} not found`)
+        endIndex = beforeIndex
+        startIndex = Math.max(0, endIndex - last)
+        items = allItems.slice(startIndex, endIndex)
+      } else {
+        throw new Error('entryId, after+first, 또는 before+last 필요')
+      }
+
+      return {
+        items,
+        pageInfo: {
+          startCursor: items.length > 0 ? items[0].numericId : null,
+          endCursor: items.length > 0 ? items[items.length - 1].numericId : null,
+          hasPreviousPage: startIndex > 0,
+          hasNextPage: endIndex < allItems.length,
+        },
+      }
+    }
+
+    async function fetchItems(params) {
+      const allItems = await fetchAllItems()
+      return resolveItems(allItems, params)
+    }
+
+    // --- 초기 로드 ---
+    const initial = await fetchItems({ entryId: ENTRY_ID, first: 7, last: 3 })
+    startCursor = initial.pageInfo.startCursor
+    endCursor = initial.pageInfo.endCursor
+    hasPrevious = initial.pageInfo.hasPreviousPage
+    hasNext = initial.pageInfo.hasNextPage
+
+    initial.items.forEach(item => feed.appendChild(renderCard(item)))
+
+    // --- bidirectional infinite scroll 적용 ---
+    const scroll = bidirectionalScroll({
+      container: feed,
+      entryAnchor: `#item-${ENTRY_ID}`,
+      onLoadPrevious: async () => {
+        if (loading || !hasPrevious) return
+        loading = true
+
+        const loader = showLoading('top')
+
+        try {
+          const data = await fetchItems({ before: startCursor, last: PAGE_SIZE })
+
+          loader.remove()
+
+          const trigger = feed.querySelector('[data-bidir-scroll-trigger="before"]')
+          const insertRef = trigger?.nextSibling ?? feed.firstChild
+          data.items.forEach(item => {
+            feed.insertBefore(renderCard(item), insertRef)
+          })
+
+          startCursor = data.pageInfo.startCursor
+          hasPrevious = data.pageInfo.hasPreviousPage
+        } catch (e) {
+          loader.textContent = '로드 실패'
+          console.error(e)
+        } finally {
+          loading = false
+        }
+      },
+      onLoadNext: async () => {
+        if (loading || !hasNext) return
+        loading = true
+
+        const loader = showLoading('bottom')
+
+        try {
+          const data = await fetchItems({ after: endCursor, first: PAGE_SIZE })
+
+          loader.remove()
+
+          const trigger = feed.querySelector('[data-bidir-scroll-trigger="after"]')
+          data.items.forEach(item => {
+            feed.insertBefore(renderCard(item), trigger)
+          })
+
+          endCursor = data.pageInfo.endCursor
+          hasNext = data.pageInfo.hasNextPage
+        } catch (e) {
+          loader.textContent = '로드 실패'
+          console.error(e)
+        } finally {
+          loading = false
+        }
+      },
+      observerInit: { rootMargin: '100px' },
+    })
+  </script>
+</body>
+</html>
