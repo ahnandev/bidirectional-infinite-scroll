@@ -1,6 +1,6 @@
 {
   "name": "@ahnandev/bidirectional-infinite-scroll",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Lightweight bidirectional infinite scroll using scrollIntoView",
   "repository": {
     "type": "git",

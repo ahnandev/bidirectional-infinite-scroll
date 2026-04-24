@@ -1,5 +1,7 @@
 # bidirectional-infinite-scroll
 
+![Grid to list UI mock](./.github/assets/grid-to-list-mock.png)
+
 Lightweight bidirectional infinite scroll
 
 It uses standard web APIs such as `IntersectionObserver` and `scrollIntoView` instead of scroll listeners and manual `scrollTop` correction. The package currently exposes the React APIs `useBidirectionalScroll` and `FetchMore`.

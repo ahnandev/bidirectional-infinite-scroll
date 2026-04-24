@@ -1,5 +1,7 @@
 # bidirectional-infinite-scroll
 
+![Grid to list UI mock](./.github/assets/grid-to-list-mock.png)
+
 `scrollIntoView` 기반의 경량 양방향 무한스크롤.
 
 web API(`IntersectionObserver`, `scrollIntoView`)만으로 동작합니다. scroll listener와 수동 `scrollTop` 보정 코드를 직접 관리하고 싶지 않을 때 쓰기 좋습니다. 현재 패키지는 React API인 `useBidirectionalScroll`과 `FetchMore`를 제공합니다.
