@@ -9,7 +9,7 @@ export default defineConfig([
     clean: true,
   },
   {
-    entry: { react: 'src/react/index.ts' },
+    entry: { react: 'src/react.ts' },
     format: ['esm', 'cjs'],
     dts: true,
     sourcemap: true,

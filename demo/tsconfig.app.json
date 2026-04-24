@@ -7,8 +7,7 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
-      "@ahnandev/bidirectional-infinite-scroll": ["../src/index.ts"],
-      "@ahnandev/bidirectional-infinite-scroll/react": ["../src/react/index.ts"]
+      "@ahnandev/bidirectional-infinite-scroll": ["../src/index.ts"]
     },
     "types": ["vite/client"],
     "skipLibCheck": true,

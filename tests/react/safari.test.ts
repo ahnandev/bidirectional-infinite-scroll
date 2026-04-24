@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { isSafariOrIOS, safeScrollIntoView } from '../../src/core/safari'
+import { isSafariOrIOS, safeScrollIntoView } from '../../src/safari'
 
 describe('isSafariOrIOS', () => {
   const originalNavigator = globalThis.navigator
@@ -81,9 +81,7 @@ describe('safeScrollIntoView', () => {
 
     expect(element.scrollIntoView).toHaveBeenCalledTimes(1)
 
-    // outer rAF
     vi.advanceTimersByTime(16)
-    // inner rAF
     vi.advanceTimersByTime(16)
 
     expect(element.scrollIntoView).toHaveBeenCalledTimes(2)
@@ -104,11 +102,9 @@ describe('safeScrollIntoView', () => {
   it('outer rAF 실행 후 cleanup해도 inner rAF 취소됨', () => {
     const cleanup = safeScrollIntoView(element, { behavior: 'instant', block: 'start' }, true)
 
-    // outer rAF 실행 (inner rAF 등록됨)
     vi.advanceTimersByTime(16)
     expect(element.scrollIntoView).toHaveBeenCalledTimes(1)
 
-    // inner rAF 실행 전에 cleanup
     cleanup!()
 
     vi.advanceTimersByTime(16)

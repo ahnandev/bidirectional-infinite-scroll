@@ -1,26 +1,20 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { GridView } from './GridView'
 import { FeedView } from './FeedView'
-import { VanillaFeedView } from './VanillaFeedView'
 
-type DemoMode = 'react' | 'vanilla'
 const DEFAULT_ENTRY_ID = 100
 
 export default function App() {
   const [selectedId, setSelectedId] = useState(DEFAULT_ENTRY_ID)
   const [showGrid, setShowGrid] = useState(false)
-  const [mode, setMode] = useState<DemoMode>('react')
-  const gridScrollY = useRef(0)
 
   const openFeed = (id: number) => {
-    gridScrollY.current = window.scrollY
     setSelectedId(id)
     setShowGrid(false)
     window.scrollTo(0, 0)
   }
 
   const openGrid = () => {
-    gridScrollY.current = window.scrollY
     setShowGrid(true)
   }
 
@@ -31,43 +25,16 @@ export default function App() {
           <div style={styles.eyebrow}>bidirectional-infinite-scroll demo</div>
           <h1 style={styles.title}>Grid to Feed</h1>
           <p style={styles.copy}>
-            Pick an item from the grid, then compare the same bidirectional list behavior in
-            React and Vanilla JS.
+            Pick an item from the grid to enter the React demo.
           </p>
-          <div style={styles.modeRow}>
-            <button
-              style={{ ...styles.modeButton, ...(mode === 'react' ? styles.modeButtonActive : {}) }}
-              onClick={() => setMode('react')}
-            >
-              React
-            </button>
-            <button
-              style={{ ...styles.modeButton, ...(mode === 'vanilla' ? styles.modeButtonActive : {}) }}
-              onClick={() => setMode('vanilla')}
-            >
-              Vanilla JS
-            </button>
-            <a
-              style={styles.modeButton}
-              href="/bidirectional-infinite-scroll/vanilla.html"
-            >
-              Pure Vanilla JS
-            </a>
-          </div>
         </div>
       )}
 
       <div style={{ display: showGrid ? 'block' : 'none' }}>
         <GridView onSelect={openFeed} />
       </div>
-      {!showGrid && mode === 'react' && (
+      {!showGrid && (
         <FeedView
-          entryId={selectedId}
-          onBack={openGrid}
-        />
-      )}
-      {!showGrid && mode === 'vanilla' && (
-        <VanillaFeedView
           entryId={selectedId}
           onBack={openGrid}
         />
@@ -109,26 +76,5 @@ const styles = {
     fontSize: 14,
     lineHeight: 1.5,
     color: '#57534e',
-  } satisfies React.CSSProperties,
-  modeRow: {
-    display: 'flex',
-    gap: 8,
-    marginBottom: 10,
-  } satisfies React.CSSProperties,
-  modeButton: {
-    border: '1px solid rgba(28, 25, 23, 0.12)',
-    background: 'rgba(255,255,255,0.72)',
-    color: '#44403c',
-    borderRadius: 999,
-    padding: '8px 14px',
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: 'pointer',
-    fontFamily: 'inherit',
-  } satisfies React.CSSProperties,
-  modeButtonActive: {
-    background: '#1c1917',
-    color: '#fafaf9',
-    borderColor: '#1c1917',
   } satisfies React.CSSProperties,
 }

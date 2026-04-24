@@ -7,9 +7,6 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      '@ahnandev/bidirectional-infinite-scroll/react': fileURLToPath(
-        new URL('../src/react/index.ts', import.meta.url),
-      ),
       '@ahnandev/bidirectional-infinite-scroll': fileURLToPath(
         new URL('../src/index.ts', import.meta.url),
       ),
@@ -20,7 +17,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),
-        vanilla: fileURLToPath(new URL('./vanilla.html', import.meta.url)),
       },
     },
   },

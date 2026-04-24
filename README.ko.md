@@ -2,7 +2,7 @@
 
 `scrollIntoView` 기반의 경량 양방향 무한스크롤.
 
-web API(`IntersectionObserver`, `scrollIntoView`)만으로 동작합니다. scroll listener와 수동 `scrollTop` 보정 코드를 직접 관리하고 싶지 않을 때 쓰기 좋습니다. React에서는 `useBidirectionalScroll`, Vanilla JS에서는 `bidirectionalScroll`를 중심으로 사용하면 됩니다. `FetchMore`는 선택적인 helper입니다.
+web API(`IntersectionObserver`, `scrollIntoView`)만으로 동작합니다. scroll listener와 수동 `scrollTop` 보정 코드를 직접 관리하고 싶지 않을 때 쓰기 좋습니다. 현재 패키지는 React API인 `useBidirectionalScroll`과 `FetchMore`를 제공합니다.
 
 [English README](./README.md)
 
@@ -26,7 +26,7 @@ npm run demo:react -- 16
 ### React
 
 ```tsx
-import { FetchMore, useBidirectionalScroll } from '@ahnandev/bidirectional-infinite-scroll/react'
+import { FetchMore, useBidirectionalScroll } from '@ahnandev/bidirectional-infinite-scroll'
 
 function Feed({ items, anchorId, hasPreviousPage, hasNextPage, loadPrevious, loadNext }) {
   const { itemRef } = useBidirectionalScroll({
@@ -60,38 +60,6 @@ function Feed({ items, anchorId, hasPreviousPage, hasNextPage, loadPrevious, loa
 - optional) `safariCorrection`: Safari layout shift 방지를 위한 double-rAF 보정을 사용합니다. 기본값은 `true`입니다.
 - optional) `FetchMore`: helper 컴포넌트입니다. 같은 역할의 `IntersectionObserver` 트리거를 직접 만들어도 됩니다.
 - optional) `anchorRef`와 `firstItemRef`: 수동 제어용 저수준 ref입니다.
-
-### Vanilla JS
-
-```js
-import { bidirectionalScroll } from '@ahnandev/bidirectional-infinite-scroll'
-
-const container = document.getElementById('feed')
-
-const scroll = bidirectionalScroll({
-  container,
-  entryAnchor: '#item-42',
-  onLoadPrevious: async () => {
-    prependOlderItems(container)
-  },
-  onLoadNext: async () => {
-    appendNewerItems(container)
-  },
-  observerInit: { rootMargin: '50px' },
-})
-
-scroll.destroy()
-```
-
-`bidirectionalScroll`: core vanilla JS 함수입니다.
-
-- `container`: 스크롤 컨테이너 element
-- `onLoadPrevious` / `onLoadNext`: 더보기 호출 함수
-- optional) `entryAnchor`: 목록을 특정 아이템 위치에서 시작하고 싶을 때 사용합니다.
-- optional) `observerInit`: load trigger에 사용할 `IntersectionObserver` 옵션입니다.
-- optional) `scrollOptions`: `scrollIntoView` 옵션을 덮어씁니다.
-- optional) `overscrollBehavior`: container에 `overscroll-behavior`를 적용합니다.
-- optional) `safariCorrection`: Safari layout shift 방지를 위한 double-rAF 보정을 사용합니다. 기본값은 `true`입니다.
 
 ## 라이선스
 

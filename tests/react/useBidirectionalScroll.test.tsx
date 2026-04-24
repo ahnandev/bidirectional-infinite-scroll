@@ -1,7 +1,7 @@
 import React from 'react'
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { render, cleanup, act } from '@testing-library/react'
-import { useBidirectionalScroll } from '../../src/react/useBidirectionalScroll'
+import { useBidirectionalScroll } from '../../src/useBidirectionalScroll'
 import { useState } from 'react'
 
 afterEach(cleanup)
