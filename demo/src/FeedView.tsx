@@ -77,12 +77,7 @@ export function FeedView({ entryId, onBack }: Props) {
 
   return (
     <div style={styles.container}>
-      <div style={styles.header}>
-        <button style={styles.backBtn} onClick={onBack}>
-          ← grid
-        </button>
-      </div>
-
+      <div style={styles.body}>
       {items.length === 0 ? (
         <div style={styles.loader}>loading...</div>
       ) : (
@@ -133,6 +128,13 @@ export function FeedView({ entryId, onBack }: Props) {
           )}
         </div>
       )}
+      </div>
+
+      <div style={styles.header}>
+        <button style={styles.backBtn} onClick={onBack}>
+          ← grid
+        </button>
+      </div>
     </div>
   )
 }
@@ -141,10 +143,17 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     background: '#f5f5f5',
     minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  body: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
   },
   header: {
     position: 'sticky',
-    top: 0,
+    bottom: 0,
     zIndex: 10,
     padding: '12px 16px',
     background: 'rgba(28,25,23,0.94)',
