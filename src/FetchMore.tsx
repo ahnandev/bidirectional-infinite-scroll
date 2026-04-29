@@ -22,6 +22,7 @@ export function FetchMore({
   observerInit,
 }: FetchMoreProps) {
   const triggerRef = React.useRef<HTMLDivElement>(null)
+  const inFlightRef = React.useRef(false)
   const handlerRef = React.useRef(onIntersect)
   handlerRef.current = onIntersect
 
@@ -29,6 +30,7 @@ export function FetchMore({
   hasMoreRef.current = hasMore
   const loadingRef = React.useRef(loading)
   loadingRef.current = loading
+
   const threshold = observerInit?.threshold
   const thresholdKey = Array.isArray(threshold) ? threshold.join(',') : String(threshold ?? '')
 
@@ -37,8 +39,21 @@ export function FetchMore({
     if (!el) return
 
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && hasMoreRef.current && !loadingRef.current) {
-        handlerRef.current()
+      if (
+        entry.isIntersecting &&
+        hasMoreRef.current &&
+        !loadingRef.current &&
+        !inFlightRef.current
+      ) {
+        inFlightRef.current = true
+        try {
+          Promise.resolve(handlerRef.current()).finally(() => {
+            inFlightRef.current = false
+          })
+        } catch (error) {
+          inFlightRef.current = false
+          throw error
+        }
       }
     }, observerInit)
 

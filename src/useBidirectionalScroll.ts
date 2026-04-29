@@ -3,6 +3,10 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { safeScrollIntoView } from './safari'
 
 type RefCallback = (el: HTMLElement | null) => void
+const DEFAULT_SCROLL_OPTIONS: ScrollIntoViewOptions = {
+  behavior: 'instant' as const,
+  block: 'start' as const,
+}
 
 export interface UseBidirectionalScrollOptions<TKey extends string | number = string | number> {
   /** Item id to anchor on initial render */
@@ -58,7 +62,7 @@ export function useBidirectionalScroll<TKey extends string | number = string | n
 ): UseBidirectionalScrollResult<TKey> {
   const {
     anchorId,
-    scrollOptions = { behavior: 'instant' as const, block: 'start' as const },
+    scrollOptions = DEFAULT_SCROLL_OPTIONS,
     safariCorrection,
   } = options
 

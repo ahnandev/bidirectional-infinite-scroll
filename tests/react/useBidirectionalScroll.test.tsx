@@ -53,6 +53,32 @@ describe('useBidirectionalScroll', () => {
     expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1)
   })
 
+  it('기본 scrollOptions 사용 시 ref callback identity를 유지', () => {
+    const refs: unknown[] = []
+
+    function Test() {
+      const [count, setCount] = useState(0)
+      const { firstItemRef } = useBidirectionalScroll()
+      refs.push(firstItemRef)
+
+      return (
+        <>
+          <div ref={firstItemRef}>first</div>
+          <button data-testid="rerender" onClick={() => setCount(c => c + 1)}>
+            {count}
+          </button>
+        </>
+      )
+    }
+
+    const { getByTestId } = render(<Test />)
+
+    act(() => getByTestId('rerender').click())
+
+    expect(refs).toHaveLength(2)
+    expect(refs[1]).toBe(refs[0])
+  })
+
   it('firstItemRef: 첫 번째 아이템이 바뀌면 이전 아이템으로 앵커링', () => {
     function Test() {
       const [items, setItems] = useState(['a', 'b', 'c'])

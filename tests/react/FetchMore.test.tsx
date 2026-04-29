@@ -1,6 +1,6 @@
 import React from 'react'
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { render, cleanup } from '@testing-library/react'
+import { render, cleanup, act } from '@testing-library/react'
 import { FetchMore } from '../../src/FetchMore'
 
 afterEach(cleanup)
@@ -28,9 +28,50 @@ describe('FetchMore', () => {
     render(<FetchMore hasMore={true} onIntersect={onIntersect} />)
 
     const obs = getLatestObserver()
-    obs.callback([{ isIntersecting: true }], {})
+    act(() => {
+      obs.callback([{ isIntersecting: true }], {})
+    })
 
     expect(onIntersect).toHaveBeenCalledTimes(1)
+  })
+
+  it('onIntersect Promise 처리 중이면 중복 호출 안 됨', async () => {
+    let resolveLoad!: () => void
+    const onIntersect = vi.fn(
+      () =>
+        new Promise<void>(resolve => {
+          resolveLoad = resolve
+        }),
+    )
+
+    render(<FetchMore hasMore={true} onIntersect={onIntersect} />)
+
+    const obs = getLatestObserver()
+    act(() => {
+      obs.callback([{ isIntersecting: true }], {})
+      obs.callback([{ isIntersecting: true }], {})
+    })
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(onIntersect).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      resolveLoad()
+      await Promise.resolve()
+    })
+
+    act(() => {
+      obs.callback([{ isIntersecting: true }], {})
+    })
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(onIntersect).toHaveBeenCalledTimes(2)
   })
 
   it('hasMore=false이면 onIntersect 호출 안 됨', () => {
@@ -38,7 +79,9 @@ describe('FetchMore', () => {
     render(<FetchMore hasMore={false} onIntersect={onIntersect} />)
 
     const obs = getLatestObserver()
-    obs.callback([{ isIntersecting: true }], {})
+    act(() => {
+      obs.callback([{ isIntersecting: true }], {})
+    })
 
     expect(onIntersect).not.toHaveBeenCalled()
   })
@@ -48,7 +91,9 @@ describe('FetchMore', () => {
     render(<FetchMore hasMore={true} loading={true} onIntersect={onIntersect} />)
 
     const obs = getLatestObserver()
-    obs.callback([{ isIntersecting: true }], {})
+    act(() => {
+      obs.callback([{ isIntersecting: true }], {})
+    })
 
     expect(onIntersect).not.toHaveBeenCalled()
   })
@@ -58,7 +103,9 @@ describe('FetchMore', () => {
     render(<FetchMore hasMore={true} onIntersect={onIntersect} />)
 
     const obs = getLatestObserver()
-    obs.callback([{ isIntersecting: false }], {})
+    act(() => {
+      obs.callback([{ isIntersecting: false }], {})
+    })
 
     expect(onIntersect).not.toHaveBeenCalled()
   })
