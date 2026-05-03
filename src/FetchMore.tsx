@@ -3,8 +3,6 @@ import * as React from 'react'
 export interface FetchMoreProps {
   /** Whether there are more items to load */
   hasMore: boolean
-  /** Whether currently loading */
-  loading?: boolean
   /** Called when trigger enters the viewport */
   onIntersect: () => void | Promise<void>
   /** IntersectionObserver options */
@@ -17,7 +15,6 @@ export interface FetchMoreProps {
  */
 export function FetchMore({
   hasMore,
-  loading = false,
   onIntersect,
   observerInit,
 }: FetchMoreProps) {
@@ -28,32 +25,20 @@ export function FetchMore({
 
   const hasMoreRef = React.useRef(hasMore)
   hasMoreRef.current = hasMore
-  const loadingRef = React.useRef(loading)
-  loadingRef.current = loading
 
-  const threshold = observerInit?.threshold
-  const thresholdKey = Array.isArray(threshold) ? threshold.join(',') : String(threshold ?? '')
+  const thresholdKey = String(observerInit?.threshold ?? '')
 
   React.useEffect(() => {
     const el = triggerRef.current
     if (!el) return
 
-    const observer = new IntersectionObserver(([entry]) => {
-      if (
-        entry.isIntersecting &&
-        hasMoreRef.current &&
-        !loadingRef.current &&
-        !inFlightRef.current
-      ) {
-        inFlightRef.current = true
-        try {
-          Promise.resolve(handlerRef.current()).finally(() => {
-            inFlightRef.current = false
-          })
-        } catch (error) {
-          inFlightRef.current = false
-          throw error
-        }
+    const observer = new IntersectionObserver(async ([entry]) => {
+      if (!entry.isIntersecting || !hasMoreRef.current || inFlightRef.current) return
+      inFlightRef.current = true
+      try {
+        await handlerRef.current()
+      } finally {
+        inFlightRef.current = false
       }
     }, observerInit)
 

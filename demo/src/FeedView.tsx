@@ -88,7 +88,6 @@ export function FeedView({ entryId, onBack }: Props) {
 
             <FetchMore
               hasMore={pageInfo.hasPreviousPage}
-              loading={loading}
               onIntersect={loadPrevious}
               observerInit={{ rootMargin: '200px' }}
             />
@@ -118,7 +117,6 @@ export function FeedView({ entryId, onBack }: Props) {
 
             <FetchMore
               hasMore={pageInfo.hasNextPage}
-              loading={loading}
               onIntersect={loadNext}
               observerInit={{ rootMargin: '200px' }}
             />

@@ -86,18 +86,6 @@ describe('FetchMore', () => {
     expect(onIntersect).not.toHaveBeenCalled()
   })
 
-  it('loading=true이면 onIntersect 호출 안 됨', () => {
-    const onIntersect = vi.fn()
-    render(<FetchMore hasMore={true} loading={true} onIntersect={onIntersect} />)
-
-    const obs = getLatestObserver()
-    act(() => {
-      obs.callback([{ isIntersecting: true }], {})
-    })
-
-    expect(onIntersect).not.toHaveBeenCalled()
-  })
-
   it('isIntersecting=false이면 호출 안 됨', () => {
     const onIntersect = vi.fn()
     render(<FetchMore hasMore={true} onIntersect={onIntersect} />)
