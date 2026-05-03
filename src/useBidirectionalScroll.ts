@@ -66,42 +66,48 @@ export function useBidirectionalScroll<TKey extends string | number = string | n
     safariCorrection,
   } = options
 
+  const optionsRef = useRef({ scrollOptions, safariCorrection })
+  optionsRef.current = { scrollOptions, safariCorrection }
+  const anchorIdRef = useRef(anchorId)
+  anchorIdRef.current = anchorId
+
   const cleanupRef = useRef<(() => void) | undefined>(undefined)
   const hasScrolledToEntry = useRef(false)
+  const lastAnchorIdRef = useRef(anchorId)
   const firstElRef = useRef<HTMLElement | null>(null)
   const prevFirstElRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => () => cleanupRef.current?.(), [])
 
-  const anchorRef = useCallback(
-    (el: HTMLElement | null) => {
-      if (el && !hasScrolledToEntry.current) {
-        hasScrolledToEntry.current = true
-        cleanupRef.current?.()
-        cleanupRef.current = safeScrollIntoView(el, scrollOptions, safariCorrection)
-      }
-    },
-    [scrollOptions, safariCorrection],
-  )
+  const anchorRef = useCallback((el: HTMLElement | null) => {
+    if (!el) return
+    if (lastAnchorIdRef.current !== anchorIdRef.current) {
+      hasScrolledToEntry.current = false
+      lastAnchorIdRef.current = anchorIdRef.current
+    }
+    if (hasScrolledToEntry.current) return
+    hasScrolledToEntry.current = true
+    cleanupRef.current?.()
+    const { scrollOptions, safariCorrection } = optionsRef.current
+    cleanupRef.current = safeScrollIntoView(el, scrollOptions, safariCorrection)
+  }, [])
 
-  const firstItemRef = useCallback(
-    (el: HTMLElement | null) => {
-      if (el === null) {
-        prevFirstElRef.current = firstElRef.current
-        firstElRef.current = null
-        return
-      }
+  const firstItemRef = useCallback((el: HTMLElement | null) => {
+    if (el === null) {
+      prevFirstElRef.current = firstElRef.current
+      firstElRef.current = null
+      return
+    }
 
-      firstElRef.current = el
+    firstElRef.current = el
 
-      if (prevFirstElRef.current && prevFirstElRef.current !== el) {
-        cleanupRef.current?.()
-        cleanupRef.current = safeScrollIntoView(prevFirstElRef.current, scrollOptions, safariCorrection)
-        prevFirstElRef.current = null
-      }
-    },
-    [scrollOptions, safariCorrection],
-  )
+    if (prevFirstElRef.current && prevFirstElRef.current !== el) {
+      cleanupRef.current?.()
+      const { scrollOptions, safariCorrection } = optionsRef.current
+      cleanupRef.current = safeScrollIntoView(prevFirstElRef.current, scrollOptions, safariCorrection)
+      prevFirstElRef.current = null
+    }
+  }, [])
 
   const mergedItemRef = useMemo(
     () => mergeRefs(anchorRef, firstItemRef),
@@ -111,14 +117,15 @@ export function useBidirectionalScroll<TKey extends string | number = string | n
   const itemRef = useCallback(
     ({ itemId, index }: ItemRefArgs<TKey>) => {
       const isFirst = index === 0
-      const isAnchor = anchorId !== undefined && itemId === anchorId
+      const currentAnchorId = anchorIdRef.current
+      const isAnchor = currentAnchorId !== undefined && itemId === currentAnchorId
 
       if (isFirst && isAnchor) return mergedItemRef
       if (isAnchor) return anchorRef
       if (isFirst) return firstItemRef
       return undefined
     },
-    [anchorId, anchorRef, firstItemRef, mergedItemRef],
+    [anchorRef, firstItemRef, mergedItemRef],
   )
 
   return { anchorRef, firstItemRef, itemRef }
